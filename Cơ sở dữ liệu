@@ -1,0 +1,125 @@
+-- Tạo database và sử dụng
+CREATE DATABASE shop_ThoiTrang;
+GO
+USE shop_ThoiTrang;
+GO
+
+-- Bảng danh mục sản phẩm
+CREATE TABLE Categories (
+    Id NVARCHAR(20) NOT NULL PRIMARY KEY,
+    Name NVARCHAR(50) NOT NULL
+);
+
+-- Bảng sản phẩm
+CREATE TABLE Products (
+    Id NVARCHAR(20) NOT NULL PRIMARY KEY,
+    Name NVARCHAR(50) NOT NULL,
+    UnitPrice FLOAT NOT NULL,
+    Discount FLOAT NOT NULL,
+    Image NVARCHAR(50) NOT NULL,
+    Available BIT NOT NULL,
+    CategoryId NVARCHAR(20) NOT NULL,
+    FOREIGN KEY (CategoryId) REFERENCES Categories(Id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+-- Bảng khách hàng
+CREATE TABLE Customers (
+    Id NVARCHAR(20) NOT NULL PRIMARY KEY,
+    Name NVARCHAR(50) NOT NULL,
+    Phone NVARCHAR(20) NULL,
+    Address NVARCHAR(100) NULL,
+    Enabled BIT NOT NULL DEFAULT 1
+);
+
+-- Bảng người dùng
+CREATE TABLE Users (
+    Username NVARCHAR(20) NOT NULL PRIMARY KEY,
+    Password NVARCHAR(50) NOT NULL,
+    Enabled BIT NOT NULL,
+    Fullname NVARCHAR(50) NOT NULL,
+    Photo NVARCHAR(50) NOT NULL,
+    Manager BIT NOT NULL
+);
+
+-- Bảng hóa đơn
+CREATE TABLE Bills (
+    Id BIGINT NOT NULL IDENTITY(10000,1) PRIMARY KEY,
+    Username NVARCHAR(20) NOT NULL,
+    Checkin DATETIME NOT NULL,
+    Checkout DATETIME NULL,
+    Status INT NOT NULL,
+    CustomerId NVARCHAR(20) NULL,
+    FOREIGN KEY (Username) REFERENCES Users(Username)
+        ON UPDATE CASCADE,
+    FOREIGN KEY (CustomerId) REFERENCES Customers(Id)
+        ON UPDATE CASCADE
+);
+
+-- Bảng chi tiết hóa đơn
+CREATE TABLE BillDetails (
+    Id BIGINT NOT NULL IDENTITY(100000,1) PRIMARY KEY,
+    BillId BIGINT NOT NULL,
+    ProductId NVARCHAR(20) NOT NULL,
+    UnitPrice FLOAT NOT NULL,
+    Discount FLOAT NOT NULL,
+    Quantity INT NOT NULL,
+    FOREIGN KEY (BillId) REFERENCES Bills(Id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (ProductId) REFERENCES Products(Id)
+        ON DELETE CASCADE
+		ON UPDATE CASCADE
+);
+
+-- Bảng quản lý tồn kho
+CREATE TABLE Inventory (
+    ProductId NVARCHAR(20) NOT NULL PRIMARY KEY,
+    Quantity INT NOT NULL DEFAULT 0,
+    FOREIGN KEY (ProductId) REFERENCES Products(Id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+-- ===============================
+-- DỮ LIỆU TEST
+-- ===============================
+
+-- Categories
+INSERT INTO Categories (Id, Name) VALUES
+('CAT01', N'Áo thun'),
+('CAT02', N'Quần jean'),
+('CAT03', N'Váy đầm');
+
+-- Products
+INSERT INTO Products (Id, Name, UnitPrice, Discount, Image, Available, CategoryId) VALUES
+('P001', N'Áo thun nam basic', 150000, 0.1, 'ao1.jpg', 1, 'CAT01'),
+('P002', N'Quần jean nữ skinny', 300000, 0.15, 'quan1.jpg', 1, 'CAT02'),
+('P003', N'Váy xòe công sở', 450000, 0.2, 'vay1.jpg', 1, 'CAT03');
+
+-- Customers
+INSERT INTO Customers (Id, Name, Phone, Address, Enabled) VALUES
+('KH001', N'Lê Thị Mai', '0912345678', N'123 Nguyễn Trãi, Q1', 1),
+('KH002', N'Nguyễn Văn An', '0987654321', N'45 Lê Duẩn, Q3', 1);
+
+-- Users
+INSERT INTO Users (Username, Password, Enabled, Fullname, Photo, Manager) VALUES
+('admin', 'admin123', 1, N'Quản trị viên', 'admin.jpg', 1),
+('nv01', 'nvpass01', 1, N'Nguyễn Thị Nhân viên', 'nv1.jpg', 0);
+
+-- Bills
+INSERT INTO Bills (Username, Checkin, Checkout, Status, CustomerId) VALUES
+('nv01', GETDATE(), NULL, 0, 'KH001'),
+('nv01', GETDATE(), GETDATE(), 1, 'KH002');
+
+-- BillDetails
+INSERT INTO BillDetails (BillId, ProductId, UnitPrice, Discount, Quantity) VALUES
+(10000, 'P001', 150000, 0.1, 2),
+(10000, 'P002', 300000, 0.15, 1),
+(10001, 'P003', 450000, 0.2, 1);
+
+-- Inventory
+INSERT INTO Inventory (ProductId, Quantity) VALUES
+('P001', 50),
+('P002', 30),
+('P003', 20);
